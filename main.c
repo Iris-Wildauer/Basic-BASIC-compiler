@@ -184,6 +184,11 @@ struct Expr {
     } as ;
 };
 
+typedef struct Prin {
+    enum {PRINT_STM} kind;
+    Expr *expr;
+} Prin;
+
 static Expr *newNumber(const int num) {
     Expr *e = malloc(sizeof *e);
     if (e == NULL) return NULL;
@@ -201,6 +206,15 @@ static Expr *newString(const char *start, int len) {
     e->kind = STRING;
     e->as.String.start = start;
     e->as.String.len = len;
+
+    return e;
+}
+
+static struct Prin *newPrint(Expr *expr) {
+    Prin *e = malloc(sizeof *e);
+    if (e == NULL) return NULL;
+    e->kind = PRINT_STM;
+    e->expr = expr;
 
     return e;
 }
@@ -243,9 +257,11 @@ int expect(enum TokenType type, struct Parser *parser) {
 
 static Expr *parseExpr(struct Parser *parser);
 
-static Expr *parseStatement(struct Parser *parser) {
+static Prin *parseStatement(struct Parser *parser) {
     if (match(PRINT_TOK, parser)) {
-        return parseExpr(parser);
+        Expr *e = parseExpr(parser);
+        if (e == NULL) return NULL;
+        return newPrint(e);
     }
 
     struct Token t = peek(parser);
@@ -315,6 +331,17 @@ static void printExpr(const Expr *e, int indent) {
     }
 }
 
+static void printPrin(const Prin *prin) {
+    if (prin == NULL) return;
+
+    switch (prin->kind) {
+        case PRINT_STM:
+            printf("Print\n");
+            printExpr(prin->expr, 1);
+            break;
+    }
+}
+
 static void freeExpr(Expr *e) {
     if (e == NULL) return;
     if (e->kind == OPERATOR) {
@@ -323,6 +350,43 @@ static void freeExpr(Expr *e) {
     }
     free(e);
 }
+
+static void freeStmt(Prin *prin) {
+    if (prin == NULL) return;
+    freeExpr(prin->expr);
+    free(prin);
+}
+
+// Code translation
+
+int execExpr(Expr *e) {
+    switch (e->kind) {
+        case NUM: return e->as.Number;
+        case OPERATOR: {
+            int l = execExpr(e->as.Operator.left);
+            int r = execExpr(e->as.Operator.right);
+            return e->as.Operator.operation == ADD ? l + r : l * r;
+        }
+        case STRING:
+            perror("Cannot calculate with Strings u dummy :p");
+            return 0;
+    }
+    return 0;
+}
+
+static void execPrin(const Prin *prin) {
+    if (prin == NULL) return;
+    switch (prin->kind) {
+        case PRINT_STM:
+            if (prin->expr->kind == STRING) {
+                printf("%.*s\n", prin->expr->as.String.len, prin->expr->as.String.start);
+            } else {
+                printf("%d\n", execExpr(prin->expr));
+            }
+            break;
+    }
+}
+
 // MAIN :3
 int main(int argc, char *argv[]) {
     if (argc < 2) {
@@ -340,14 +404,15 @@ int main(int argc, char *argv[]) {
     int ntoks = 0;
     lexer(src, len, &toks, &ntoks);
 
-    printTokens(toks, ntoks);
+    //printTokens(toks, ntoks);
 
     struct Parser p = { toks, ntoks, 0 };
-    Expr *baum = parseStatement(&p);
-    printExpr(baum, 0);
+    Prin *baum = parseStatement(&p);
+    //printPrin(baum);
+    execPrin(baum);
 
-    freeExpr(baum);
     free(toks);
     free(src);
+
     return 0;
 }
