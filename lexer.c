@@ -59,7 +59,7 @@ int lexer(char *output, int len, struct Token **lex, int *numtokens) {
         else if (isalpha(output[i])) {
             int size = 0;
             int j = 0;
-            char buffer[20];
+            char buffer[200];
             token[n].start = &output[i];
             while (i < len && output[i] != ' ') {
                 buffer[j] = output[i];

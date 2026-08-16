@@ -25,7 +25,7 @@ int parseFile(const char *file,char **output,int *len) {
     }
 
     long size = ftell(fptr);
-    char *buffer = malloc(size * sizeof(char));
+    char *buffer = malloc(size + 1);
 
     fseek(fptr, 0, SEEK_SET);
 
@@ -33,7 +33,7 @@ int parseFile(const char *file,char **output,int *len) {
         if ( ferror( fptr ) != 0 ) {
             perror("Error reading file");
         }
-    buffer[size] = '\n';
+    buffer[newLen] = '\0';
     *output = buffer;
     *len = (int)newLen;
     fclose(fptr);
