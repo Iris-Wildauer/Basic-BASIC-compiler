@@ -16,4 +16,6 @@ int expect(enum TokenType type, struct Parser *parser);
 
 Prin *parseStatement(struct Parser *parser);
 
+Program *parseProgram(struct Parser *parser);
+
 #endif

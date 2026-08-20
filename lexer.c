@@ -7,6 +7,7 @@
 
 const char *tokenName(enum TokenType k) {
     switch (k) {
+        case NEWLINE: return "NEWLINE";
         case EOF_TOK: return "EOF";
         case PRINT_TOK: return "PRINT_TOK";
         case STRING_LITERAL: return "STRING_LITERAL";
@@ -25,10 +26,10 @@ void printTokens(const struct Token *toks, int n) {
     }
 }
 
-static enum TokenType findCmd(const char *keyword) {
-    if (strcasecmp("PRINT", keyword) == 0) {
+static enum TokenType findCmd(const char *keyword, int len) {
+    if (len == 5 && strncasecmp(keyword, "PRINT", 5) == 0) {
         return PRINT_TOK;
-    };
+    }
     return UNKNOWN;
 }
 
@@ -39,42 +40,31 @@ int lexer(char *output, int len, struct Token **lex, int *numtokens) {
     struct Token *token = malloc((len+1)* sizeof *token);
 
     while (i < len) {
-        if (isspace(output[i])) {
+        if (output[i] == ' ' || output[i] == '\t' || output[i] == '\r') {
             i++;
             continue;
         }
-        if (i < len && output[i] == '"') {
-            int size = 0;
+        if (output[i] == '"') {
             i++;
-            token[n].start = &output[i];
-            while (i < len && output[i] != '"') {
-                i++;
-                size++;
-            }
-            token[n].kind = STRING_LITERAL;
-            token[n].len = size;
-            n++;
-            i++;
-        }
-        else if (isalpha(output[i])) {
-            int size = 0;
-            int j = 0;
-            char buffer[200];
-            token[n].start = &output[i];
-            while (i < len && output[i] != ' ') {
-                buffer[j] = output[i];
-                j++;
-                i++;
-                size++;
-            }
-            buffer[j] = '\0';
-            token[n].kind = findCmd(buffer);
-            token[n].len = size;
-            n++;
-        }
-        else if (isdigit(output[i])) {
             int start = i;
-            while (isdigit(output[i])) i++;
+            while (i < len && output[i] != '"') i++;
+            token[n].kind  = STRING_LITERAL;
+            token[n].start = &output[start];
+            token[n].len   = i - start;
+            n++;
+            i++;
+        }
+        else if (isalpha((unsigned char)output[i])) {
+            int start = i;
+            while (i < len && (isalnum((unsigned char)output[i]) || output[i] == '_')) i++;
+            token[n].kind  = findCmd(&output[start], i - start);
+            token[n].start = &output[start];
+            token[n].len   = i - start;
+            n++;
+        }
+        else if (isdigit((unsigned char)output[i])) {
+            int start = i;
+            while (i < len && isdigit((unsigned char)output[i])) i++;
             token[n].kind  = NUMBER;
             token[n].start = &output[start];
             token[n].len   = i - start;
@@ -89,6 +79,13 @@ int lexer(char *output, int len, struct Token **lex, int *numtokens) {
         }
         else if (output[i] == '+') {
             token[n].kind = ADD;
+            token[n].len = 1;
+            token[n].start = &output[i];
+            n++;
+            i++;
+        }
+        else if (output[i] == '\n') {
+            token[n].kind = NEWLINE;
             token[n].len = 1;
             token[n].start = &output[i];
             n++;

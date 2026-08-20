@@ -24,6 +24,11 @@ typedef struct Prin {
     Expr *expr;
 } Prin;
 
+typedef struct {
+    Prin **stmts;
+    int    count;
+} Program;
+
 Expr *newNumber(const int num);
 
 Expr *newString(const char *start, int len);
@@ -36,8 +41,12 @@ void printExpr(const Expr *e, int indent);
 
 void printPrin(const Prin *prin);
 
+void printProgram(const Program *prog);
+
 void freeExpr(Expr *e);
 
 void freeStmt(Prin *prin);
+
+void freeProgram(Program *prog);
 
 #endif

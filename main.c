@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     int   len = 0;
     if (parseFile(argv[1], &src, &len) != 0) return 1;
 
-    printArray(len, src);
+    //printArray(len, src);
 
     struct Token *toks = NULL;
     int ntoks = 0;
@@ -28,10 +28,11 @@ int main(int argc, char *argv[]) {
     //printTokens(toks, ntoks);
 
     struct Parser p = { toks, ntoks, 0 };
-    Prin *baum = parseStatement(&p);
-    //printPrin(baum);
-    execPrin(baum);
+    Program *prog = parseProgram(&p);
+    //printProgram(prog);
+    execProgram(prog);
 
+    freeProgram(prog);
     free(toks);
     free(src);
 

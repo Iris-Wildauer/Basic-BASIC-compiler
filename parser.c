@@ -22,12 +22,11 @@ int match(enum TokenType type, struct Parser *parser) {
 int expect(enum TokenType type, struct Parser *parser) {
     if (match(type, parser)) return 1;
 
-    fprintf(stderr, "Syntaxfehler: erwartet %s, gefunden %s\n",
+    fprintf(stderr, "Syntaxerror, %s -> %s\n",
             tokenName(type),
             tokenName(parser->token[parser->pos].kind));
     return 0;
 };
-
 
 static Expr *parseExpr(struct Parser *parser);
 
@@ -35,11 +34,19 @@ Prin *parseStatement(struct Parser *parser) {
     if (match(PRINT_TOK, parser)) {
         Expr *e = parseExpr(parser);
         if (e == NULL) return NULL;
+
+        if (!match(NEWLINE, parser) && peek(parser).kind != EOF_TOK) {
+            struct Token t = peek(parser);
+            fprintf(stderr, "Syntaxerror %s ('%.*s')\n",
+                    tokenName(t.kind), t.len, t.start);
+            freeExpr(e);
+            return NULL;
+        }
         return newPrint(e);
     }
 
     struct Token t = peek(parser);
-    fprintf(stderr, "Syntaxfehler: %s ('%.*s')\n",
+    fprintf(stderr, "Syntaxerror: %s ('%.*s')\n",
             tokenName(t.kind), t.len, t.start);
     return NULL;
 }
@@ -57,7 +64,7 @@ static Expr *parseFactor(struct Parser *parser) {
         return newString(t.start, t.len);
     }
 
-    fprintf(stderr, "Syntaxfehler: %s ('%.*s')\n",
+    fprintf(stderr, "Syntaxerror: %s ('%.*s')\n",
             tokenName(t.kind), t.len, t.start);
     return NULL;
 }
@@ -84,4 +91,24 @@ static Expr *parseExpr(struct Parser *parser) {
         left = newOp(ADD, left, right);
     }
     return left;
+}
+
+Program *parseProgram(struct Parser *parser) {
+    Program *prog = malloc(sizeof *prog);
+    if (prog == NULL) return NULL;
+
+    prog->stmts = malloc((size_t)parser->n * sizeof *prog->stmts);
+    if (prog->stmts == NULL) { free(prog); return NULL; }
+    prog->count = 0;
+
+    for (;;) {
+        while (match(NEWLINE, parser)) { }
+        if (peek(parser).kind == EOF_TOK) break;
+
+        Prin *s = parseStatement(parser);
+        if (s == NULL) { freeProgram(prog); return NULL; }
+
+        prog->stmts[prog->count++] = s;
+    }
+    return prog;
 }

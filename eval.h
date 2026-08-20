@@ -7,4 +7,6 @@ int execExpr(Expr *e);
 
 void execPrin(const Prin *prin);
 
+void execProgram(const Program *prog);
+
 #endif

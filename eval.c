@@ -31,3 +31,10 @@ void execPrin(const Prin *prin) {
             break;
     }
 }
+
+void execProgram(const Program *prog) {
+    if (prog == NULL) return;
+    for (int i = 0; i < prog->count; i++) {
+        execPrin(prog->stmts[i]);
+    }
+}

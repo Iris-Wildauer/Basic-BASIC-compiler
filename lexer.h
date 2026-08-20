@@ -2,6 +2,7 @@
 #define LEXER_H
 
 enum TokenType {
+    NEWLINE,
     EOF_TOK,
     UNKNOWN,
     //keywords

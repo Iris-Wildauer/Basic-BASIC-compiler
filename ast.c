@@ -90,3 +90,19 @@ void freeStmt(Prin *prin) {
     freeExpr(prin->expr);
     free(prin);
 }
+
+void printProgram(const Program *prog) {
+    if (prog == NULL) return;
+    for (int i = 0; i < prog->count; i++) {
+        printPrin(prog->stmts[i]);
+    }
+}
+
+void freeProgram(Program *prog) {
+    if (prog == NULL) return;
+    for (int i = 0; i < prog->count; i++) {
+        freeStmt(prog->stmts[i]);
+    }
+    free(prog->stmts);
+    free(prog);
+}
